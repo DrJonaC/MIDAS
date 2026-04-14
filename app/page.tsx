@@ -1,0 +1,247 @@
+"use client";
+
+import { useState } from "react";
+import { Heatmap } from "@/components/Heatmap";
+import { InputBox } from "@/components/InputBox";
+import { MemoryCard } from "@/components/MemoryCard";
+import {
+  baseMemories,
+  simulateActivation,
+  type ActivationResult
+} from "@/lib/memory";
+import {
+  applyQueryResult,
+  createInitialSessionState,
+  markForgotten,
+  resetSessionView,
+  restoreForgottenMemories,
+  setSessionQuery,
+  togglePinned,
+  toggleSoftened,
+  undoLastSessionAction
+} from "@/lib/memory-state";
+
+type LiveResponse = {
+  answer?: string;
+  summary?: string;
+  memory_explanations?: {
+    memory_id: string;
+    why: string;
+  }[];
+  message?: string;
+};
+
+export default function Page() {
+  const [session, setSession] = useState(() =>
+    createInitialSessionState(
+      baseMemories,
+      "Design a calm AI interface that explains what it remembers about me."
+    )
+  );
+  const [useLive, setUseLive] = useState(false);
+  const [liveSummary, setLiveSummary] = useState("");
+  const [liveExplanations, setLiveExplanations] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    const activation = simulateActivation(session.query, baseMemories, session.modifiers);
+    setSession((current) => applyQueryResult(current, current.query, activation));
+
+    if (!useLive) {
+      setError(null);
+      setLiveSummary("");
+      setLiveExplanations({});
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/query", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          query: session.query,
+          memories: activation.memories.slice(0, 5).map((memory) => ({
+            id: memory.id,
+            content: memory.content,
+            relevance_score: memory.relevance_score,
+            risk_level: memory.risk_level
+          }))
+        })
+      });
+
+      const payload = (await response.json()) as LiveResponse;
+      if (!response.ok || !payload.answer) {
+        throw new Error(payload.message ?? "Unable to generate a live response.");
+      }
+
+      const explanationMap = Object.fromEntries(
+        (payload.memory_explanations ?? []).map((item) => [item.memory_id, item.why])
+      );
+
+      setSession((current) =>
+        applyQueryResult(current, current.query, {
+          ...activation,
+          response: payload.answer as string
+        })
+      );
+      setLiveSummary(payload.summary ?? "");
+      setLiveExplanations(explanationMap);
+    } catch (submissionError) {
+      const message =
+        submissionError instanceof Error ? submissionError.message : "Unable to generate a live response.";
+      setError(message);
+      setLiveSummary("");
+      setLiveExplanations({});
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <main className="min-h-screen bg-radial-veil px-5 py-10 text-white md:px-8">
+      <div className="mx-auto max-w-7xl">
+        <section className="rounded-[2rem] border border-white/10 bg-slate-950/45 px-6 py-8 shadow-aura backdrop-blur md:px-8">
+          <div className="max-w-3xl">
+            <p className="text-xs uppercase tracking-[0.3em] text-glow/80">Pensieve / Ming Xiang Pen</p>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-5xl">
+              Observe how memory shapes an answer.
+            </h1>
+            <p className="mt-4 text-base leading-7 text-slate-300">
+              A minimal observability surface for simulated LLM memory: ranked traces, influence heatmap, and simple
+              user controls for softening or forgetting what the model recalls.
+            </p>
+          </div>
+
+          <div className="mt-8">
+            <InputBox
+              value={session.query}
+              onChange={(query) => setSession((current) => setSessionQuery(current, query))}
+              onSubmit={handleSubmit}
+              isLoading={isLoading}
+              modeLabel={useLive ? "Live Mode" : "Mock Mode"}
+            />
+          </div>
+
+          <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-mist/70">Simulated Response</p>
+                <p className="mt-3 text-sm leading-7 text-slate-200">{session.result.response}</p>
+                <div className="mt-4">
+                  <p className="text-xs uppercase tracking-[0.24em] text-mist/70">Memory Summary</p>
+                  <p className="mt-2 text-sm leading-7 text-slate-300">
+                    {useLive && liveSummary
+                      ? liveSummary
+                      : "A local summary will appear here when Live Mode returns structured explainability."}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUseLive((current) => !current);
+                    setError(null);
+                    setLiveSummary("");
+                    setLiveExplanations({});
+                  }}
+                  className="rounded-full border border-glow/25 bg-glow/10 px-3 py-2 text-xs text-cyan-100 transition hover:border-glow/55 hover:bg-glow/20"
+                >
+                  {useLive ? "Live Mode" : "Mock Mode"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSession((current) => resetSessionView(current, baseMemories))}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white transition hover:border-white/25 hover:bg-white/10"
+                >
+                  Reset View
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSession((current) => restoreForgottenMemories(current, baseMemories))}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white transition hover:border-white/25 hover:bg-white/10"
+                >
+                  Restore Forgotten
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSession((current) => undoLastSessionAction(current))}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white transition hover:border-white/25 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={session.history.length === 0}
+                >
+                  Undo
+                </button>
+              </div>
+            </div>
+            {error ? <p className="mt-3 text-sm text-rose-200">{error}</p> : null}
+            {isLoading ? <p className="mt-3 text-xs uppercase tracking-[0.22em] text-glow/80">Loading live response...</p> : null}
+          </div>
+        </section>
+
+        <section className="mt-8 grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-4">
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-mist/70">User View</p>
+                <h2 className="mt-2 text-2xl font-semibold text-white">Ranked Memories</h2>
+              </div>
+              <p className="text-sm text-mist/75">
+                {session.result.memories.length} visible memories
+                {session.result.hiddenMemoryIds.length > 0 ? ` · ${session.result.hiddenMemoryIds.length} hidden` : ""}
+              </p>
+            </div>
+
+            {session.result.memories.map((memory) => (
+              <MemoryCard
+                key={memory.id}
+                memory={memory}
+                explanation={
+                  liveExplanations[memory.id] ??
+                  session.result.reasons[memory.id] ??
+                  "This memory remained available in the active set."
+                }
+                onSoften={(id) => setSession((current) => toggleSoftened(current, baseMemories, id))}
+                onForget={(id) => setSession((current) => markForgotten(current, baseMemories, id))}
+                onPin={(id) => setSession((current) => togglePinned(current, baseMemories, id))}
+              />
+            ))}
+          </div>
+
+          <div className="space-y-6">
+            <Heatmap
+              tokens={session.result.tokens}
+              memories={session.result.memories}
+              heatmap={session.result.heatmap}
+            />
+
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-aura">
+              <p className="text-xs uppercase tracking-[0.24em] text-mist/70">Memory Model</p>
+              <div className="mt-4 grid gap-3 text-sm text-slate-300">
+                <p>
+                  Input is tokenized by words, compared against each memory&apos;s keywords, and converted into a
+                  token-to-memory influence score between 0 and 1.
+                </p>
+                <p>
+                  Higher overlap lifts <span className="text-white">relevance_score</span>, updates{" "}
+                  <span className="text-white">last_activated</span>, and increments{" "}
+                  <span className="text-white">activation_count</span>.
+                </p>
+                <p>
+                  Session actions remain reversible: <span className="text-white">Soften</span> lowers weight,{" "}
+                  <span className="text-white">Forget</span> hides a memory, and <span className="text-white">Pin</span>{" "}
+                  keeps it at the top without mutating the base dataset.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
