@@ -4,8 +4,8 @@ import { PensieveProvider } from "@/lib/session";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Pensieve",
-  description: "Observe, interpret, and manage how an LLM remembers you."
+  title: "MIDAS — Memory Integrity and Drift-Aware Safeguard",
+  description: "Detect Context-Drift Violations in real time — guard what your agent knows about you."
 };
 
 export default function RootLayout({

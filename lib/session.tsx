@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState, type PropsWithChildren } from "react";
-import { baseMemories, buildDormantActivationResult, simulateActivation, type ActivationResult } from "@/lib/memory";
+import { baseMemories, buildDormantActivationResult, simulateActivation } from "@/lib/memory";
 import {
   applyQueryResult,
   createInitialSessionState,
@@ -17,8 +17,9 @@ import {
 import {
   buildMockNarrative,
   mergeMemoryExplanationMap,
-  pickTopMemories,
+  partitionMemoriesForQuery,
   type NarrativeState,
+  type PartitionedMemories,
   type PensieveMode,
   type QueryApiResponse
 } from "@/lib/query";
@@ -67,7 +68,8 @@ export function PensieveProvider({ children }: PropsWithChildren) {
   };
 
   const submitQuery = async () => {
-    let activation: ActivationResult | null = null;
+    console.log("[TRACE v999]", new Date().toISOString());
+    let partitioned: PartitionedMemories | null = null;
     let query = "";
     let shouldCallLive = false;
 
@@ -76,7 +78,19 @@ export function PensieveProvider({ children }: PropsWithChildren) {
       const nextActivation = current.query.trim()
         ? simulateActivation(current.query, baseMemories, current.modifiers)
         : buildDormantActivationResult(baseMemories, current.modifiers, current.query);
-      activation = nextActivation;
+
+      if (current.query.trim()) {
+        const partitionResult = partitionMemoriesForQuery(nextActivation.memories);
+        console.log("[TRACE partition]",
+          "llm count:", partitionResult.llmMemories.length,
+          "cdv count:", partitionResult.cdvMemories.length,
+          "memory-4 origin_tp:",
+          partitionResult.cdvMemories.find(m => m.id === "memory-4")?.origin_tp
+        );
+        partitioned = partitionResult;
+      } else {
+        partitioned = null;
+      }
 
       const nextSession = applyQueryResult(current, current.query, nextActivation);
       setNarrative(buildMockNarrative(nextSession.result));
@@ -86,9 +100,11 @@ export function PensieveProvider({ children }: PropsWithChildren) {
       return nextSession;
     });
 
-    if (!activation || !shouldCallLive || !query.trim()) {
+    if (!partitioned || !shouldCallLive || !query.trim()) {
       return;
     }
+
+    const safePartitioned = partitioned as PartitionedMemories;
 
     try {
       const response = await fetch("/api/query", {
@@ -96,14 +112,11 @@ export function PensieveProvider({ children }: PropsWithChildren) {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          mode: "live",
-          query,
-          memories: pickTopMemories(activation.memories)
-        })
+        body: JSON.stringify({ mode: "live", query, memories: safePartitioned.llmMemories, cdv_memories: safePartitioned.cdvMemories ?? [] })
       });
 
       const payload = (await response.json()) as QueryApiResponse;
+      console.log("[TRACE payload raw]", JSON.stringify(payload));
       if (!response.ok || !payload.ok || !payload.data || !payload.meta) {
         throw new Error(payload.error ?? "Live LLM mode failed.");
       }
@@ -114,8 +127,22 @@ export function PensieveProvider({ children }: PropsWithChildren) {
         model: payload.meta.model,
         source: "live"
       });
+
+      const cdvResults = payload.data.cdv_results ?? {};
+      setSession((current) => ({
+        ...current,
+        result: {
+          ...current.result,
+          memories: current.result.memories.map((m) => ({
+            ...m,
+            cdv: cdvResults[m.id] ?? null
+          }))
+        }
+      }));
+
       setError(null);
     } catch (requestError) {
+      console.log("[TRACE live fetch error]", requestError);
       const message = requestError instanceof Error ? requestError.message : "Live LLM mode failed.";
       setError(`${message} Falling back to local mock narrative.`);
     } finally {

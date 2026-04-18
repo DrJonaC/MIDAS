@@ -1,0 +1,113 @@
+{
+  "generated_at": "2026-04-17T16:06:42.125Z",
+  "total_queries": 50,
+  "total_memory_checks": 2000,
+  "total_violations": 411,
+  "violation_rate": 0.2055,
+  "by_query_context": {
+    "medical": {
+      "checks": 400,
+      "violations": 35,
+      "violation_rate": 0.0875,
+      "critical": 26,
+      "warning": 9
+    },
+    "financial": {
+      "checks": 400,
+      "violations": 210,
+      "violation_rate": 0.525,
+      "critical": 156,
+      "warning": 54
+    },
+    "preference": {
+      "checks": 400,
+      "violations": 140,
+      "violation_rate": 0.35,
+      "critical": 104,
+      "warning": 36
+    },
+    "work": {
+      "checks": 400,
+      "violations": 26,
+      "violation_rate": 0.065,
+      "critical": 15,
+      "warning": 11
+    },
+    "social": {
+      "checks": 400,
+      "violations": 0,
+      "violation_rate": 0,
+      "critical": 0,
+      "warning": 0
+    }
+  },
+  "by_memory_info_type": {
+    "medical": {
+      "checks": 400,
+      "violations": 96,
+      "violation_rate": 0.24
+    },
+    "financial": {
+      "checks": 350,
+      "violations": 77,
+      "violation_rate": 0.22
+    },
+    "preference": {
+      "checks": 100,
+      "violations": 0,
+      "violation_rate": 0
+    },
+    "behavioral": {
+      "checks": 800,
+      "violations": 154,
+      "violation_rate": 0.1925
+    },
+    "identity": {
+      "checks": 350,
+      "violations": 84,
+      "violation_rate": 0.24
+    }
+  },
+  "by_severity": {
+    "none": 1589,
+    "warning": 110,
+    "critical": 301
+  },
+  "cross_table": {
+    "medical": {
+      "medical": 0.1,
+      "financial": 0.1,
+      "preference": 0,
+      "behavioral": 0.0813,
+      "identity": 0.1
+    },
+    "financial": {
+      "medical": 0.6,
+      "financial": 0.6,
+      "preference": 0,
+      "behavioral": 0.4875,
+      "identity": 0.6
+    },
+    "preference": {
+      "medical": 0.4,
+      "financial": 0.4,
+      "preference": 0,
+      "behavioral": 0.325,
+      "identity": 0.4
+    },
+    "work": {
+      "medical": 0.1,
+      "financial": 0,
+      "preference": 0,
+      "behavioral": 0.0688,
+      "identity": 0.1
+    },
+    "social": {
+      "medical": 0,
+      "financial": 0,
+      "preference": 0,
+      "behavioral": 0,
+      "identity": 0
+    }
+  }
+}

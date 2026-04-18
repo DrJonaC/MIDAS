@@ -22,8 +22,8 @@ export function AppShell({ children }: AppShellProps) {
         <header className="mystic-panel rounded-[2rem] px-5 py-4 md:px-6">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
             <Link href="/" className="min-w-fit">
-              <p className="text-xs uppercase tracking-[0.32em] text-glow/80">Pensieve / Ming Xiang Pen</p>
-              <h1 className="mt-2 font-display text-2xl font-semibold tracking-wide text-white">Memory Surface</h1>
+              <p className="text-xs uppercase tracking-[0.32em] text-gold">MIDAS</p>
+              <h1 className="mt-2 font-display text-2xl font-semibold tracking-wide text-white">Privacy Surface</h1>
             </Link>
 
             <div className="flex flex-col gap-4 xl:items-end">

@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-console.log("API KEY:", process.env.OPENAI_API_KEY);
+import { detectCDV, type CDVMemoryUnit, type CDVResult, type TPLevel } from "@/lib/cdv";
 type GenerateResponseInput = {
   query: string;
   memories: {
@@ -7,6 +7,8 @@ type GenerateResponseInput = {
     content: string;
     relevance_score: number;
     risk_level: string;
+    origin_context?: string;
+    origin_tp?: TPLevel;
   }[];
 };
 
@@ -19,6 +21,7 @@ type GenerateResponseOutput = {
   answer: string;
   summary: string;
   memory_explanations: MemoryExplanation[];
+  cdv_results: Record<string, CDVResult>;
 };
 
 let cachedClient: OpenAI | null = null;
@@ -37,7 +40,31 @@ function getClient(): OpenAI {
   return cachedClient;
 }
 
-function buildFallbackResponse(input: GenerateResponseInput, answer: string): GenerateResponseOutput {
+function buildCDVMap(query: string, memories: GenerateResponseInput["memories"]): Record<string, CDVResult> {
+  return Object.fromEntries(
+    memories.map((memory) => {
+      const cdvMemory: CDVMemoryUnit = {
+        ...memory,
+        keywords: [],
+        created_at: "",
+        last_activated: "",
+        activation_count: 0,
+        relevance_score: memory.relevance_score,
+        risk_level: memory.risk_level as CDVMemoryUnit["risk_level"],
+        status: "active",
+        origin_context: memory.origin_context ?? "",
+        origin_tp: memory.origin_tp ?? "public"
+      };
+      return [memory.id, detectCDV(query, cdvMemory)];
+    })
+  );
+}
+
+function buildFallbackResponse(
+  input: GenerateResponseInput,
+  answer: string,
+  cdv_results: Record<string, CDVResult>
+): GenerateResponseOutput {
   return {
     answer,
     summary:
@@ -50,7 +77,8 @@ function buildFallbackResponse(input: GenerateResponseInput, answer: string): Ge
     memory_explanations: input.memories.slice(0, 3).map((memory) => ({
       memory_id: memory.id,
       why: `This memory surfaced because it was included among the highest-ranked memories for the current query.`
-    }))
+    })),
+    cdv_results
   };
 }
 
@@ -87,6 +115,8 @@ function isStructuredResponse(value: unknown): value is GenerateResponseOutput {
 }
 
 export async function generateResponse(input: GenerateResponseInput): Promise<GenerateResponseOutput> {
+  const cdv_results = buildCDVMap(input.query, input.memories);
+
   const client = getClient();
   const topMemories = input.memories.slice(0, 3);
   const memoryBlock = topMemories.length
@@ -138,21 +168,23 @@ export async function generateResponse(input: GenerateResponseInput): Promise<Ge
 
   const jsonText = extractJsonObject(outputText);
   if (!jsonText) {
-    return buildFallbackResponse(input, outputText);
+    return buildFallbackResponse(input, outputText, cdv_results);
   }
 
   try {
     const parsed = JSON.parse(jsonText) as unknown;
     if (isStructuredResponse(parsed)) {
+      const fallback = buildFallbackResponse(input, outputText, cdv_results);
       return {
-        answer: parsed.answer.trim() || buildFallbackResponse(input, outputText).answer,
-        summary: parsed.summary.trim() || buildFallbackResponse(input, outputText).summary,
-        memory_explanations: parsed.memory_explanations
+        answer: parsed.answer.trim() || fallback.answer,
+        summary: parsed.summary.trim() || fallback.summary,
+        memory_explanations: parsed.memory_explanations,
+        cdv_results
       };
     }
   } catch {
-    return buildFallbackResponse(input, outputText);
+    return buildFallbackResponse(input, outputText, cdv_results);
   }
 
-  return buildFallbackResponse(input, outputText);
+  return buildFallbackResponse(input, outputText, cdv_results);
 }

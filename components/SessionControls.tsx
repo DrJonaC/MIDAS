@@ -10,14 +10,14 @@ export function SessionControls() {
       <button
         type="button"
         onClick={resetView}
-        className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white transition hover:border-white/25 hover:bg-white/10"
+        className="rounded-full border border-gold/20 bg-black-surface px-3 py-2 text-xs text-white transition hover:border-gold/40 hover:bg-gold/10"
       >
         Reset View
       </button>
       <button
         type="button"
         onClick={restoreForgotten}
-        className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white transition hover:border-white/25 hover:bg-white/10"
+        className="rounded-full border border-gold/20 bg-black-surface px-3 py-2 text-xs text-white transition hover:border-gold/40 hover:bg-gold/10"
       >
         Restore Forgotten
       </button>
@@ -25,7 +25,7 @@ export function SessionControls() {
         type="button"
         onClick={undo}
         disabled={session.history.length === 0}
-        className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white transition hover:border-white/25 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-full border border-gold/20 bg-black-surface px-3 py-2 text-xs text-white transition hover:border-gold/40 hover:bg-gold/10 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Undo
       </button>

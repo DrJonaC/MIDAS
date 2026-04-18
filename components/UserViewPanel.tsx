@@ -55,14 +55,18 @@ function getSurfacedThemes(
 }
 
 export function UserViewPanel() {
+  console.log("[TRACE UserViewPanel render]", new Date().toISOString());
   const {
     session,
-    liveExplanations,
+    narrative,
     toggleSoftenedMemory,
     togglePinnedMemory,
     forgetMemory
   } = usePensieve();
   const visibleMemories = session.result.memories;
+  const explanationMap = Object.fromEntries(
+    (narrative.memory_explanations ?? []).map((e) => [e.memory_id, e.why])
+  );
   const priorityKeywords = getPriorityKeywords(visibleMemories);
   const surfacedThemes = getSurfacedThemes(visibleMemories);
   const activeCount = visibleMemories.filter((memory) => memory.status === "active").length;
@@ -89,19 +93,19 @@ export function UserViewPanel() {
 
       <section className="grid gap-4 md:grid-cols-4">
         <div className="mystic-panel-soft rounded-[1.4rem] p-4">
-          <p className="text-xs uppercase tracking-[0.22em] text-mist/70">Active</p>
+          <p className="text-xs uppercase tracking-[0.22em] text-gold">Active</p>
           <p className="mt-2 font-display text-3xl text-white">{activeCount}</p>
         </div>
         <div className="mystic-panel-soft rounded-[1.4rem] p-4">
-          <p className="text-xs uppercase tracking-[0.22em] text-mist/70">Pinned</p>
+          <p className="text-xs uppercase tracking-[0.22em] text-gold">Pinned</p>
           <p className="mt-2 font-display text-3xl text-white">{pinnedCount}</p>
         </div>
         <div className="mystic-panel-soft rounded-[1.4rem] p-4">
-          <p className="text-xs uppercase tracking-[0.22em] text-mist/70">Softened</p>
+          <p className="text-xs uppercase tracking-[0.22em] text-gold">Softened</p>
           <p className="mt-2 font-display text-3xl text-white">{softenedCount}</p>
         </div>
         <div className="mystic-panel-soft rounded-[1.4rem] p-4">
-          <p className="text-xs uppercase tracking-[0.22em] text-mist/70">Hidden</p>
+          <p className="text-xs uppercase tracking-[0.22em] text-gold">Hidden</p>
           <p className="mt-2 font-display text-3xl text-white">{hiddenCount}</p>
         </div>
       </section>
@@ -109,7 +113,7 @@ export function UserViewPanel() {
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <div className="space-y-6">
           <div className="mystic-panel rounded-[1.9rem] p-6">
-            <p className="text-xs uppercase tracking-[0.24em] text-mist/70">Priority Keywords</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-gold">Priority Keywords</p>
             <h3 className="mt-2 font-display text-3xl text-white">What is most salient right now</h3>
             <div className="silk-divider mt-4" />
             <div className="mt-5 flex flex-wrap gap-3">
@@ -123,10 +127,10 @@ export function UserViewPanel() {
                     key={item.keyword}
                     className={`rounded-full border px-4 py-2 text-sm transition ${
                       strong
-                        ? "border-glow/35 bg-glow/18 text-white shadow-pulse"
+                        ? "border-gold bg-gold text-black shadow-pulse"
                         : medium
-                          ? "border-cyan-300/20 bg-cyan-300/10 text-cyan-100"
-                          : "border-white/10 bg-white/[0.04] text-mist"
+                          ? "border-gold/40 bg-gold/15 text-gold"
+                          : "border-gold/20 bg-black-surface text-mist"
                     }`}
                   >
                     {item.keyword}
@@ -137,7 +141,7 @@ export function UserViewPanel() {
           </div>
 
           <div className="mystic-panel rounded-[1.9rem] p-6">
-            <p className="text-xs uppercase tracking-[0.24em] text-mist/70">Surfaced Themes</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-gold">Surfaced Themes</p>
             <h3 className="mt-2 font-display text-3xl text-white">Phrase-level memory field</h3>
             <div className="silk-divider mt-4" />
             <div className="mt-5 grid gap-3">
@@ -153,7 +157,7 @@ export function UserViewPanel() {
           </div>
 
           <div className="mystic-panel rounded-[1.9rem] p-6">
-          <p className="text-xs uppercase tracking-[0.24em] text-mist/70">Interpretation</p>
+          <p className="text-xs uppercase tracking-[0.24em] text-gold">Interpretation</p>
             <h3 className="mt-2 font-display text-3xl text-white">Activated memory summary</h3>
             <div className="silk-divider mt-4" />
             <p className="mt-4 text-base leading-8 text-slate-200">
@@ -168,10 +172,11 @@ export function UserViewPanel() {
               key={memory.id}
               memory={memory}
               explanation={
-                liveExplanations[memory.id] ??
+                explanationMap[memory.id] ??
                 session.result.reasons[memory.id] ??
                 "This memory remained available in the active set."
               }
+              cdv={memory.cdv ?? undefined}
               onSoften={toggleSoftenedMemory}
               onForget={forgetMemory}
               onPin={togglePinnedMemory}

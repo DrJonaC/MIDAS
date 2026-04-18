@@ -51,7 +51,7 @@ export function buildPensieveInput(query: string, memories: QueryMemoryInput[]):
     ? memories
         .map(
           (memory, index) =>
-            `${index + 1}. [${memory.memory_id}] content="${memory.content}" relevance=${memory.relevance_score} risk=${memory.risk_level} keywords=${memory.keywords.join(", ")}`
+            `${index + 1}. [${memory.id}] content="${memory.content}" relevance=${memory.relevance_score} risk=${memory.risk_level} keywords=${memory.keywords.join(", ")}`
         )
         .join("\n")
     : "No memory units were supplied.";

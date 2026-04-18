@@ -3,11 +3,13 @@ import { ActivationResult, ScoredMemory } from "@/lib/memory";
 export type PensieveMode = "mock" | "live";
 
 export type QueryMemoryInput = {
-  memory_id: string;
+  id: string;
   content: string;
   relevance_score: number;
   risk_level: ScoredMemory["risk_level"];
   keywords: string[];
+  origin_context?: string;
+  origin_tp?: string;
 };
 
 export type MemoryExplanation = {
@@ -19,12 +21,18 @@ export type LLMQueryResult = {
   answer: string;
   summary: string;
   memory_explanations: MemoryExplanation[];
+  cdv_results?: Record<string, {
+    is_violation: boolean;
+    severity: "none" | "warning" | "critical";
+    reason: string;
+  }>;
 };
 
 export type QueryApiRequest = {
   mode: PensieveMode;
   query: string;
   memories: QueryMemoryInput[];
+  cdv_memories: QueryMemoryInput[];
 };
 
 export type QueryApiResponse = {
@@ -44,14 +52,29 @@ export type NarrativeState = LLMQueryResult & {
   source: PensieveMode;
 };
 
-export function pickTopMemories(memories: readonly ScoredMemory[], limit = 4): QueryMemoryInput[] {
-  return memories.slice(0, limit).map((memory) => ({
-    memory_id: memory.id,
+export type PartitionedMemories = {
+  llmMemories: QueryMemoryInput[];
+  cdvMemories: QueryMemoryInput[];
+};
+
+function toQueryInput(memory: ScoredMemory): QueryMemoryInput {
+  return {
+    id: memory.id,
     content: memory.content,
     relevance_score: Number(memory.relevance_score.toFixed(3)),
     risk_level: memory.risk_level,
-    keywords: memory.keywords
-  }));
+    keywords: memory.keywords,
+    origin_context: memory.origin_context,
+    origin_tp: memory.origin_tp
+  };
+}
+
+export function partitionMemoriesForQuery(memories: readonly ScoredMemory[]): PartitionedMemories {
+  console.log("[TRACE pickTop input]", memories.map(m => ({ id: m.id, origin_tp: m.origin_tp })));
+  return {
+    llmMemories: memories.slice(0, 3).map(toQueryInput),
+    cdvMemories: memories.map(toQueryInput)
+  };
 }
 
 export function buildMockNarrative(result: ActivationResult): NarrativeState {

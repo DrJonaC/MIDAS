@@ -16,7 +16,7 @@ export function ModeToggle() {
             type="button"
             onClick={() => setMode(value)}
             className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${
-              active ? "bg-glow/20 text-white shadow-pulse" : "text-mist hover:text-white"
+              active ? "bg-gold text-black shadow-pulse" : "text-mist hover:text-gold"
             }`}
           >
             {value === "mock" ? "Mock Mode" : "Live LLM"}
