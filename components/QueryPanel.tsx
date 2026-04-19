@@ -45,7 +45,7 @@ export function QueryPanel() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             <p className="section-kicker">Privacy Surface</p>
-            <h2 className="section-title mt-4">Submit a query and inspect the activation surface.</h2>
+            <h2 className="section-title mt-4">Submit a query to run context-drift detection.</h2>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <SessionControls />
@@ -75,13 +75,13 @@ export function QueryPanel() {
           {mode === "live" && narrative.summary ? (
             <>
               <div className="silk-divider mt-4" />
-              <p className="mt-4 text-xs uppercase tracking-[0.24em] text-gold">Memory Summary</p>
+              <p className="mt-4 text-xs uppercase tracking-[0.24em] text-gold">Detection Summary</p>
               <p className="mt-2 text-sm leading-7 text-slate-300">{narrative.summary}</p>
             </>
           ) : null}
           {error ? <p className="mt-3 text-sm text-rose-200">{error}</p> : null}
           {isLoading ? (
-            <p className="mt-3 text-xs uppercase tracking-[0.22em] text-gold">Drawing live interpretation...</p>
+            <p className="mt-3 text-xs uppercase tracking-[0.22em] text-gold">Running live drift detection...</p>
           ) : null}
         </div>
       </section>
@@ -145,7 +145,7 @@ export function QueryPanel() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-gold">Ranked Memories</p>
+              <p className="text-xs uppercase tracking-[0.24em] text-gold">Flagged Memories</p>
               <p className="mt-1 text-sm text-mist">
                 {violationsOnly
                   ? `Showing ${visibleMemories.length} violation${visibleMemories.length !== 1 ? "s" : ""}`
@@ -179,7 +179,7 @@ export function QueryPanel() {
                 key={memory.id}
                 memory={memory}
                 explanation={
-                  displayedReasons[memory.id] ?? "This memory remained available in the active set."
+                  displayedReasons[memory.id] ?? "This memory was active in the scan set."
                 }
                 cdv={memory.cdv ?? undefined}
                 onSoften={toggleSoftenedMemory}

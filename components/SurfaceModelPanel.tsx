@@ -15,13 +15,13 @@ export function SurfaceModelPanel() {
           <div className="mystic-panel rounded-[2rem] px-6 py-8 md:px-8">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-3xl">
-                <p className="section-kicker">Surface Model</p>
+                <p className="section-kicker">Detection Surface</p>
                 <h2 className="section-title mt-4">
-                  Query the basin and inspect the activation surface.
+                  Run drift detection and inspect the activation surface.
                 </h2>
                 <p className="mt-4 text-base leading-8 text-slate-300">
-                  This technical view combines the query panel, response panel, token-level activation, and the memory
-                  mechanics behind the current surface.
+                  Technical view of the detection pipeline — query tokens, per-memory CDV checks, activation scores,
+                  and the mechanics behind the privacy surface.
                 </p>
               </div>
               <SessionControls />
@@ -66,28 +66,28 @@ export function SurfaceModelPanel() {
             </div>
 
             <div className="mt-6 rounded-[1.4rem] border border-gold/20 bg-black-surface p-4">
-              <p className="text-sm uppercase tracking-[0.18em] text-gold">Memory summary</p>
+              <p className="text-sm uppercase tracking-[0.18em] text-gold">Detection summary</p>
               <p className="mt-3 text-base leading-8 text-slate-300">
                 {mode === "live" && narrative.summary
                   ? narrative.summary
-                  : "A local summary will appear here when Live Mode returns structured explainability."}
+                  : "A local summary will appear here when Live Mode returns structured CDV analysis."}
               </p>
             </div>
 
             {error ? <p className="mt-5 text-sm text-rose-200">{error}</p> : null}
             {isLoading ? (
-              <p className="mt-5 text-xs uppercase tracking-[0.22em] text-gold">Drawing live interpretation...</p>
+              <p className="mt-5 text-xs uppercase tracking-[0.22em] text-gold">Running live drift detection...</p>
             ) : null}
           </section>
 
           <section className="mystic-panel rounded-[1.9rem] p-6">
-            <p className="text-xs uppercase tracking-[0.24em] text-gold">Mechanics</p>
-            <h3 className="mt-2 font-display text-3xl text-white">How the surface is rendered</h3>
+            <p className="text-xs uppercase tracking-[0.24em] text-gold">Detection pipeline</p>
+            <h3 className="mt-2 font-display text-3xl text-white">How the detection surface is built</h3>
             <div className="silk-divider mt-4" />
             <div className="mt-5 grid gap-3 text-sm leading-7 text-slate-300">
-              <p>The heatmap is still generated locally from token-to-keyword overlap.</p>
-              <p>New queries always recompute activation from immutable base memory data plus reversible session modifiers.</p>
-              <p>In Live LLM mode, only the answer and memory explanations are delegated to the server-side OpenAI integration.</p>
+              <p>Token-to-memory influence is computed locally from keyword overlap.</p>
+              <p>Each query recomputes activation from immutable base memory entries plus reversible session modifiers.</p>
+              <p>In Live mode, CDV detection and memory explanations run on the server-side LLM integration.</p>
             </div>
           </section>
         </div>

@@ -41,7 +41,7 @@ export function InputBox({ value, onChange, onSubmit, isLoading = false, modeLab
           disabled={isLoading}
           className="rounded-[1.25rem] border border-gold bg-gold px-5 py-3 text-sm font-semibold text-black transition hover:bg-gold-light hover:shadow-pulse disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {isLoading ? "Consulting the basin..." : "Surface Memory"}
+          {isLoading ? "Running detection..." : "Scan Memory"}
         </button>
       </div>
     </div>

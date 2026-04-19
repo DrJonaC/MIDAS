@@ -80,11 +80,10 @@ export function UserViewPanel() {
       <section className="mystic-panel rounded-[2rem] px-6 py-8 md:px-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <p className="section-kicker">User View</p>
-            <h2 className="section-title mt-4">A calmer reading of what the model recalls</h2>
+            <p className="section-kicker">Privacy Dashboard</p>
+            <h2 className="section-title mt-4">Your privacy surface — drift violations surfaced</h2>
             <p className="mt-4 text-base leading-8 text-slate-300">
-              This view emphasizes human-readable memory phrases, clear relevance, and reversible controls rather than
-              low-level mechanics.
+              MIDAS flags memories that violate contextual integrity when used outside their origin context.
             </p>
           </div>
           <SessionControls />
@@ -114,7 +113,7 @@ export function UserViewPanel() {
         <div className="space-y-6">
           <div className="mystic-panel rounded-[1.9rem] p-6">
             <p className="text-xs uppercase tracking-[0.24em] text-gold">Priority Keywords</p>
-            <h3 className="mt-2 font-display text-3xl text-white">What is most salient right now</h3>
+            <h3 className="mt-2 font-display text-3xl text-white">Contexts with highest activation weight</h3>
             <div className="silk-divider mt-4" />
             <div className="mt-5 flex flex-wrap gap-3">
               {priorityKeywords.map((item) => {
@@ -141,8 +140,8 @@ export function UserViewPanel() {
           </div>
 
           <div className="mystic-panel rounded-[1.9rem] p-6">
-            <p className="text-xs uppercase tracking-[0.24em] text-gold">Surfaced Themes</p>
-            <h3 className="mt-2 font-display text-3xl text-white">Phrase-level memory field</h3>
+            <p className="text-xs uppercase tracking-[0.24em] text-gold">Flagged Memory Entries</p>
+            <h3 className="mt-2 font-display text-3xl text-white">Phrase-level context map</h3>
             <div className="silk-divider mt-4" />
             <div className="mt-5 grid gap-3">
               {surfacedThemes.map((theme, index) => (
@@ -157,8 +156,8 @@ export function UserViewPanel() {
           </div>
 
           <div className="mystic-panel rounded-[1.9rem] p-6">
-          <p className="text-xs uppercase tracking-[0.24em] text-gold">Interpretation</p>
-            <h3 className="mt-2 font-display text-3xl text-white">Activated memory summary</h3>
+          <p className="text-xs uppercase tracking-[0.24em] text-gold">Detection Analysis</p>
+            <h3 className="mt-2 font-display text-3xl text-white">Active memory summary</h3>
             <div className="silk-divider mt-4" />
             <p className="mt-4 text-base leading-8 text-slate-200">
               {session.result.response}
@@ -174,7 +173,7 @@ export function UserViewPanel() {
               explanation={
                 explanationMap[memory.id] ??
                 session.result.reasons[memory.id] ??
-                "This memory remained available in the active set."
+                "This memory was active in the scan set."
               }
               cdv={memory.cdv ?? undefined}
               onSoften={toggleSoftenedMemory}

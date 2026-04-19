@@ -87,7 +87,7 @@ export function MemoryCard({
       </div>
 
       <div className="mt-5 rounded-[1.35rem] border border-gold/20 bg-black-surface p-4">
-        <p className="text-[11px] uppercase tracking-[0.24em] text-gold">Why This Memory Surfaced</p>
+        <p className="text-[11px] uppercase tracking-[0.24em] text-gold">Why This Memory Was Flagged</p>
         <p className="mt-3 text-sm leading-7 text-slate-300">{explanation}</p>
       </div>
 
